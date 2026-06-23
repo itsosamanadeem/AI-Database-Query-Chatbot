@@ -1,0 +1,12 @@
+sqlalchemy
+pyodbc
+psycopg[binary]
+langchain
+langgraph
+pandas
+langchain-ollama
+python-dotenv
+tabulate
+uvicorn
+fastapi
+pydantic

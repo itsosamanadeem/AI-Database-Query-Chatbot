@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>DataQuery AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <section class="auth-screen" id="authScreen">
+      <div class="auth-panel">
+        <div class="brand auth-brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <ellipse cx="12" cy="5" rx="7" ry="3" />
+              <path d="M5 5v7c0 1.7 3.1 3 7 3s7-1.3 7-3V5" />
+              <path d="M5 12v7c0 1.7 3.1 3 7 3s7-1.3 7-3v-7" />
+            </svg>
+          </div>
+          <div>
+            <strong>DataQuery</strong>
+            <span>Secure AI workspace</span>
+          </div>
+        </div>
+
+        <div class="auth-tabs" role="tablist" aria-label="Authentication">
+          <button class="auth-tab active" id="loginTab" type="button">Login</button>
+          <button class="auth-tab" id="signupTab" type="button">Signup</button>
+        </div>
+
+        <form class="auth-form" id="authForm">
+          <label class="auth-field" id="nameField" hidden>
+            <span>Name</span>
+            <input id="nameInput" type="text" autocomplete="name" />
+          </label>
+          <label class="auth-field">
+            <span>Email</span>
+            <input id="emailInput" type="email" autocomplete="email" required />
+          </label>
+          <label class="auth-field">
+            <span>Password</span>
+            <input id="passwordInput" type="password" autocomplete="current-password" minlength="6" required />
+          </label>
+          <p class="auth-error" id="authError" hidden></p>
+          <button class="auth-submit" id="authSubmit" type="submit">Login</button>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <ellipse cx="12" cy="5" rx="7" ry="3" />
+              <path d="M5 5v7c0 1.7 3.1 3 7 3s7-1.3 7-3V5" />
+              <path d="M5 12v7c0 1.7 3.1 3 7 3s7-1.3 7-3v-7" />
+            </svg>
+          </div>
+          <div>
+            <strong>DataQuery</strong>
+            <span>AI workspace</span>
+          </div>
+        </div>
+
+        <button class="new-chat" id="newChatButton" type="button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          New conversation
+          <span>Ctrl K</span>
+        </button>
+
+        <div class="sidebar-section">
+          <p class="eyebrow">Workspace</p>
+          <div class="workspace-card">
+            <div class="database-icon">
+              <span></span><span></span><span></span>
+            </div>
+            <div>
+              <strong>TableauDB</strong>
+              <span>Microsoft SQL Server</span>
+            </div>
+            <i class="status-dot" title="Configured"></i>
+          </div>
+        </div>
+
+        <div class="sidebar-section recent-section">
+          <p class="eyebrow">Recent</p>
+          <div class="recent-list" id="recentList"></div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="user-row">
+            <div>
+              <strong id="userName">Signed in</strong>
+              <span id="userEmail">Account</span>
+            </div>
+            <button class="logout-button" id="logoutButton" type="button" title="Logout">Logout</button>
+          </div>
+          <div class="model-row">
+            <span class="model-pulse"></span>
+            <div>
+              <strong>Ollama</strong>
+              <span>Local model</span>
+            </div>
+            <span class="local-badge">LOCAL</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <button class="icon-button menu-button" id="menuButton" aria-label="Toggle navigation">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+          <div class="conversation-title">
+            <span class="live-indicator"></span>
+            <span>Database assistant</span>
+          </div>
+          <div class="topbar-actions">
+            <span class="read-only-badge">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7 11V8a5 5 0 0 1 10 0v3" /><rect x="5" y="11" width="14" height="10" rx="2" /></svg>
+              Read only
+            </span>
+            <button class="icon-button" id="clearButton" aria-label="Clear conversation" title="Clear conversation">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M10 11v6M14 11v6M9 7l1-3h4l1 3M6 7l1 14h10l1-14" /></svg>
+            </button>
+          </div>
+        </header>
+
+        <section class="conversation" id="conversation" aria-live="polite">
+          <div class="welcome" id="welcome">
+            <div class="hero-orbit">
+              <div class="hero-icon">
+                <svg viewBox="0 0 32 32" fill="none">
+                  <ellipse cx="16" cy="8" rx="9" ry="4" />
+                  <path d="M7 8v8c0 2.2 4 4 9 4s9-1.8 9-4V8" />
+                  <path d="M7 16v8c0 2.2 4 4 9 4s9-1.8 9-4v-8" />
+                </svg>
+              </div>
+            </div>
+            <p class="eyebrow accent">Natural language -> SQL</p>
+            <h1>Ask your data<br /><em>anything.</em></h1>
+            <p class="welcome-copy">
+              I'll inspect your available views, build a safe read-only query, and turn the results into a clear answer.
+            </p>
+
+            <div class="suggestions" id="suggestions">
+              <button class="suggestion" type="button" data-question="What database views are available?">
+                <span class="suggestion-icon">DB</span>
+                <span><strong>Explore the database</strong><small>Show me all available views</small></span>
+                <b>-></b>
+              </button>
+              <button class="suggestion" type="button" data-question="Show me the top 5 most interesting records from the most relevant view.">
+                <span class="suggestion-icon">5</span>
+                <span><strong>Find key records</strong><small>Surface the most useful results</small></span>
+                <b>-></b>
+              </button>
+              <button class="suggestion" type="button" data-question="Summarize the data available in this database.">
+                <span class="suggestion-icon">SUM</span>
+                <span><strong>Summarize my data</strong><small>Understand what I can ask</small></span>
+                <b>-></b>
+              </button>
+            </div>
+          </div>
+
+          <div class="messages" id="messages"></div>
+        </section>
+
+        <footer class="composer-wrap">
+          <form class="composer" id="chatForm">
+            <textarea
+              id="questionInput"
+              rows="1"
+              placeholder="Ask a question about your database..."
+              aria-label="Database question"
+              maxlength="4000"
+              required
+            ></textarea>
+            <button class="send-button" id="sendButton" type="submit" aria-label="Send question">
+              <svg viewBox="0 0 24 24" fill="none"><path d="m5 12 14-7-4 14-3-6-7-1Z" /><path d="m12 13 7-8" /></svg>
+            </button>
+          </form>
+          <p class="composer-hint"><kbd>Enter</kbd> to send - <kbd>Shift + Enter</kbd> for a new line</p>
+        </footer>
+      </main>
+    </div>
+
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js"></script>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
