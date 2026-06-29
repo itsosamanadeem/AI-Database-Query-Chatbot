@@ -30,6 +30,12 @@ class StoredUser:
     email: str
 
 
+@dataclass(frozen=True)
+class PendingClarification:
+    original_question: str
+    clarification_question: str
+
+
 class PostgresChatHistory:
     def __init__(self, database_url: str) -> None:
         self.engine = create_engine(database_url)
@@ -93,6 +99,19 @@ class PostgresChatHistory:
                             ON DELETE CASCADE,
                         role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
                         content TEXT NOT NULL,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    )
+                    """
+                )
+            )
+            connection.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS pending_clarifications (
+                        conversation_id UUID PRIMARY KEY
+                            REFERENCES chat_conversations(id) ON DELETE CASCADE,
+                        original_question TEXT NOT NULL,
+                        clarification_question TEXT NOT NULL,
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     )
                     """
@@ -330,6 +349,79 @@ class PostgresChatHistory:
                 StoredMessage(role=row["role"], content=row["content"])
                 for row in rows
             ]
+
+    def get_pending_clarification(
+        self, conversation_id: str, user_id: str
+    ) -> PendingClarification | None:
+        with self.engine.connect() as connection:
+            row = connection.execute(
+                text(
+                    """
+                    SELECT
+                        pending_clarifications.original_question,
+                        pending_clarifications.clarification_question
+                    FROM pending_clarifications
+                    JOIN chat_conversations
+                        ON chat_conversations.id = pending_clarifications.conversation_id
+                    WHERE pending_clarifications.conversation_id = :conversation_id
+                      AND chat_conversations.user_id = :user_id
+                    """
+                ),
+                {"conversation_id": conversation_id, "user_id": user_id},
+            ).mappings().first()
+
+        if row is None:
+            return None
+
+        return PendingClarification(
+            original_question=row["original_question"],
+            clarification_question=row["clarification_question"],
+        )
+
+    def set_pending_clarification(
+        self,
+        conversation_id: str,
+        original_question: str,
+        clarification_question: str,
+    ) -> None:
+        with self.engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO pending_clarifications (
+                        conversation_id,
+                        original_question,
+                        clarification_question
+                    )
+                    VALUES (
+                        :conversation_id,
+                        :original_question,
+                        :clarification_question
+                    )
+                    ON CONFLICT (conversation_id) DO UPDATE
+                    SET original_question = EXCLUDED.original_question,
+                        clarification_question = EXCLUDED.clarification_question,
+                        created_at = NOW()
+                    """
+                ),
+                {
+                    "conversation_id": conversation_id,
+                    "original_question": original_question,
+                    "clarification_question": clarification_question,
+                },
+            )
+
+    def clear_pending_clarification(self, conversation_id: str) -> None:
+        with self.engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    DELETE FROM pending_clarifications
+                    WHERE conversation_id = :conversation_id
+                    """
+                ),
+                {"conversation_id": conversation_id},
+            )
 
     def add_message(self, conversation_id: str, role: str, content: str) -> None:
         with self.engine.begin() as connection:

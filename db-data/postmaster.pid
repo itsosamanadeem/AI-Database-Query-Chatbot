@@ -1,8 +1,8 @@
 1
 /var/lib/postgresql/data/pgdata
-1782206301
+1782713646
 5432
 /var/run/postgresql
 *
-    80220         5
+    80220         0
 ready   

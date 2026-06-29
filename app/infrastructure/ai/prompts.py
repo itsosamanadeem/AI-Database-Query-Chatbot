@@ -43,7 +43,7 @@ can query. Do NOT skip this step.
 Then you should query the schema of the most relevant tables.
 
 You MUST always answer in ENGLISH language.
-""".format(dialect="mssql", top_k=5)
+""".format(dialect="mssql", top_k=all)
 
 
 def create_query_checker_prompt(query: str) -> str:

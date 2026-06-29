@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from app.application.clarification import ClarificationGuard
 from app.infrastructure.database.postgres_history import PostgresChatHistory
 
 
@@ -9,10 +10,12 @@ class ChatService:
         agent,
         history: PostgresChatHistory,
         history_context_limit: int,
+        clarification_guard: ClarificationGuard | None = None,
     ) -> None:
         self.agent = agent
         self.history = history
         self.history_context_limit = history_context_limit
+        self.clarification_guard = clarification_guard or ClarificationGuard()
 
     def ask(self, question: str, user_id: str, conversation_id: str | None = None):
         clean_question = question.strip()
@@ -29,8 +32,48 @@ class ChatService:
             {"role": message.role, "content": message.content}
             for message in previous_messages
         ]
-        messages.append({"role": "user", "content": clean_question})
 
+        pending_clarification = self.history.get_pending_clarification(
+            active_conversation_id, user_id
+        )
+        if pending_clarification is not None:
+            followup_prompt = self.clarification_guard.build_followup_prompt(
+                pending_clarification.original_question,
+                pending_clarification.clarification_question,
+                clean_question,
+            )
+            messages.append({"role": "user", "content": followup_prompt})
+            self.history.add_message(active_conversation_id, "user", clean_question)
+            self.history.clear_pending_clarification(active_conversation_id)
+
+            response = self.agent.invoke({"messages": messages})
+            answer = self._extract_answer(response)
+            self.history.add_message(active_conversation_id, "assistant", answer)
+
+            return {
+                "conversation_id": active_conversation_id,
+                "answer": answer,
+            }
+
+        clarification = self.clarification_guard.check(clean_question)
+        if clarification is not None:
+            self.history.add_message(active_conversation_id, "user", clean_question)
+            self.history.add_message(
+                active_conversation_id, "assistant", clarification.question
+            )
+            self.history.set_pending_clarification(
+                active_conversation_id,
+                clean_question,
+                clarification.question,
+            )
+
+            return {
+                "conversation_id": active_conversation_id,
+                "answer": clarification.question,
+                "needs_clarification": True,
+            }
+
+        messages.append({"role": "user", "content": clean_question})
         self.history.add_message(active_conversation_id, "user", clean_question)
         response = self.agent.invoke({"messages": messages})
         answer = self._extract_answer(response)
